@@ -1,0 +1,99 @@
+#!/bin/sh
+#
+# ${project.artifactId}
+#
+# chkconfig:   - 95 05
+# description: ${project.description}
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+prog="${project.artifactId}"
+
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+
+lockfile=/var/lock/subsys/$prog
+
+start() {
+    echo -n $"Starting $prog: "
+
+    #make pid file writeable - is this necessary?
+    rm -f /var/run/$prog.pid
+    touch /var/run/$prog.pid
+    chown $prog.$prog /var/run/$prog.pid
+
+    config="--spring.config.location=/etc/$prog/$prog.properties -Dlogback.configurationFile=/etc/$prog/logback.xml"
+    javacmd="/usr/bin/java -jar /usr/share/$prog/$prog.jar $config"
+    cmd="$javacmd >> /var/log/$prog/$prog.log 2>&1 & echo \$! > /var/run/$prog.pid"
+
+    daemon --user $prog "$cmd"
+
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && touch $lockfile
+    return $retval
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    # stop it here, often "killproc $prog"
+    killproc $prog 
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && rm -f $lockfile
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    status $prog
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+
+case "$1" in
+    start)
+        rh_status_q && exit 0
+        $1
+        ;;
+    stop)
+        rh_status_q || exit 0
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    reload)
+        rh_status_q || exit 7
+        $1
+        ;;
+    force-reload)
+        force_reload
+        ;;
+    status)
+        rh_status
+        ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+exit $?
