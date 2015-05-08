@@ -10,7 +10,7 @@ or in conjunction with YUM, kickstart, puppet or chef. [PhoenixSevers](http://ma
 ##Build, package and deploy
     mvn clean install
 
-on a distribution set up for rpm packaging
+On a distribution set up for rpm packaging
 
     cp target/myservice-0.0.1-SNAPSHOT-rpm.tar.gz ~/rpmbuild/SOURCES
     rpmbuild -ba target/myservice.spec
@@ -23,7 +23,7 @@ on a distribution set up for rpm packaging
 
 ##Packaging concepts
 ###rpmbuild
-`rpmbuild` is the OS tool for building RPMs. The inputs for `rpmbuild` are a tarball of the source, and the specfile. Ideally it unpacks the source and simply runs
+`rpmbuild` is the OS tool for building RPMs. The inputs for `rpmbuild` are a tarball of the source, and the spec file. Ideally it unpacks the source and simply runs
 
     make test
     make install
@@ -32,7 +32,7 @@ Whilst we could have `rpmbuild` invoke maven, the maven assembly plugin allows u
 whist simultaneously allowing us to add the additional files required for a linux service as well as decoupling the maven build process
 from the RPM packaging process.
 
-The specfile is a short script that contains package metadata including package dependencies,
+The spec file is a short script that contains package metadata including package dependencies,
 instructions to build, the files that comprise the package, and how to deploy, update and remove.
 
 ###Anatomy of a linux service
@@ -53,7 +53,7 @@ In short, a service will typically have the following files:
 * `/var/log/myservice/*`  - logs
 
 It's important to follow this standard as these are the locations a system administrator will expect. Note that there is a layer
-of abstraction in the RPM specfile in the form of [autoconfig style macros](https://fedoraproject.org/wiki/Packaging:RPMMacros).
+of abstraction in the RPM spec file in the form of [autoconfig style macros](https://fedoraproject.org/wiki/Packaging:RPMMacros).
 
 ####Initialisation script
 The initialisation script runs the service as a [daemon](http://en.wikipedia.org/wiki/Daemon_%28computing%29), as the appropriate user.
@@ -76,18 +76,16 @@ The src files contributing to packaging:
 * `src/main/rpm-resources/config/*` - Config files to be added to the assembly
 * `src/main/rpm-resources/initd/*` - Initialisation files to be added to the assembly
 * `src/main/assembly/rpm-assembly.xml` - Assembly descriptor
-* `src/main/assembly/myservice.spec` - RPM specfile
+* `src/main/assembly/myservice.spec` - RPM spec file
 
 ####The Maven Assembly
-The structure of the assembly produced is
+The structure of files in the assembly are arbitrary in that they ultimately mapped by the spec file to OS locations. The chosen structure of the assembly is
 
-```
-+-- config
-+-- initd
-+-- jar
-```
+* `config`
+* `initd`
+* `jar`
 
-The maven-resources-plugin is used to filter / insert maven properties into the specfile, the verison being of particular importance.
+The maven-resources-plugin is used to filter / insert maven properties into the spec file, the verison being of particular importance.
 
 The maven-jar-plugin is used to exclude configuration from the jar.
 With spring boot, its very handy to have application and logging configuration in `src/main/resources` in order to use `mvn spring-boot:run`.
@@ -103,12 +101,12 @@ environments by not using fully qualified domain names. Short names combined wit
 should be sufficient. Adopting this strategy, the assembly descriptor 'cherry picks' `src/main/resources/myservice.properties` into the assembly's
 `config` in lieu of having to maintain a separate `src/main/rpm-resources/myservice.properties`.
 
-#### The specfile
+#### The spec file
 Deciding whether or not to include a package dependency for a specific java implementation is a bit tricky. Ideally, our app won't care what java it's run on,
 but without a dependency the package won't be able to check for and install if necessary a sufficient implementation for it to run.
 If a java dependency is included, the package will refuse to be installed without it, even if another java implementation is available.
 If the app is an internal app, I think its a good idea to include the dependency as it will simplify deployment.
-Otherwise the specfile follows the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript).
+Otherwise the spec file follows the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript).
 
 ###The RPM lifecycle
 An understanding of RPM behaviour, particularly with how configuration files are managed for updates is important to avoid deployment gotchas for java programmers.
@@ -125,8 +123,7 @@ An understanding of RPM behaviour, particularly with how configuration files are
 
     yum update myservice.rpm
 
-* Updates the files
-  Note that for files marked as __config(noreplace)__ there is special behavior:
+* Updates the files. Note that for files marked as __config(noreplace)__ there is special behavior:
   * If the config file has local edits, but the same default config is in both RPMs, the local edits are maintained
   * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintaied and the new default config is place in `.new`.
   Its up to the administrator to manually reconcile the old existing config with the new default.
@@ -141,13 +138,13 @@ is more amenable to RPM updates.
 
     yum remove myservice.rpm
 
-* stops the service
-* un-registers the service with `chkconfig`
-* deletes all of the files owned by the RPM
+* Stops the service
+* Un-registers the service with `chkconfig`
+* Deletes all of the files owned by the RPM
 
 ###YUM repositories
 TODO
 
 ##Issues and future improvements
 * The example init script is sysv and should be updated to systemd
-* The specfile has a section for a changelog. The current example simply leaves the section empty. Perhaps the release notes could be pulled from Jira.
+* The spec file has a section for a changelog. The current example simply leaves the section empty. Perhaps the release notes could be pulled from Jira.
