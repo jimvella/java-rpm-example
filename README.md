@@ -2,13 +2,13 @@
 
 I would like to demystify how to package java services for Fedora, Red Hat and CentOS.
 There are a few build system plugins that I think end up obfuscating what is a fairly straight forward
-process with the native packaging tool `rpmbuild`.
+process with the OS's native packaging tool `rpmbuild`.
 
 RPM is a great way to streamline deployments and upgrades. It enables better configuration management either on its own
 or in conjunction with YUM, kickstart, puppet or chef. [PhoenixSevers](http://martinfowler.com/bliki/PhoenixServer.html) become straight forward.
 
 ##Build, package and deploy
-    mvn clean install
+    mvn install
 
 On a distribution set up for rpm packaging
 
@@ -85,7 +85,7 @@ The structure of files in the assembly are arbitrary in that they ultimately map
 * `initd`
 * `jar`
 
-The maven-resources-plugin is used to filter / insert maven properties into the spec file, the verison being of particular importance.
+The maven-resources-plugin is used to insert maven properties into the spec file, the verison being of particular importance.
 
 The maven-jar-plugin is used to exclude configuration from the jar.
 With spring boot, its very handy to have application and logging configuration in `src/main/resources` in order to use `mvn spring-boot:run`.
@@ -93,13 +93,13 @@ However by default, maven will include any `src/main/resources` files into the j
 can confuse administrators once the application has been deployed to production. To avoid confusion I think all configuration
 should be externalised to `/etc/myservice`.
 
-A package / production logging config `src/main/rpm-resources/config/logback.xml` is maintained separately from the `mvn spring-boot:run` development
+Production logging config `src/main/rpm-resources/config/logback.xml` is maintained separately from the `mvn spring-boot:run` development
 config `src/main/resources/config/logback.xml`. Where a development logging config will be to the console and verbose,
-the production logging config should log to `/var/log/myservice`, feature a sensible rotation scheme, ideally include a syslog appender and not be overly verbose.
+the production logging will log to `/var/log/myservice`, feature a sensible rotation scheme, ideally include a syslog appender and not be overly verbose.
 Whilst the same strategy can be applied to `myservice.properties`, It is possible for a single default config to work in multiple
-environments by not using fully qualified domain names. Short names combined with environment specificDNS resolver config (`/etc/resolv.conf`)
+environments by not using fully qualified domain names. Short names combined with environment specific DNS resolver configurations (`/etc/resolv.conf`)
 should be sufficient. Adopting this strategy, the assembly descriptor 'cherry picks' `src/main/resources/myservice.properties` into the assembly's
-`config` in lieu of having to maintain a separate `src/main/rpm-resources/myservice.properties`.
+`config` in lieu of needing to maintain a separate `src/main/rpm-resources/myservice.properties`.
 
 #### The spec file
 Deciding whether or not to include a package dependency for a specific java implementation is a bit tricky. Ideally, our app won't care what java it's run on,
