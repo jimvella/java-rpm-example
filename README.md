@@ -23,16 +23,16 @@ http://localhost:8080
 
 ##Packaging concepts
 ###rpmbuild
-The input, or the interface for `rpmbuild` is a tarball of the source. Ideally it unpacks the source and simply runs
+The inputs for `rpmbuild` are a tarball of the source, and the specfile. Ideally it unpacks the source and simply runs
 
     make test
     make install
 
-Whilst we could have `rpmbuild` invoke maven, the maven assembly plugin allows us to satisfy this 'interface' to `rpmbuild`,
-simultaneously allowing us to add the additional files required for a linux service whilst decoupling the maven build process
+Whilst we could have `rpmbuild` invoke maven, the maven assembly plugin allows us to satisfy the tarball input for `rpmbuild`,
+whist simultaneously allowing us to add the additional files required for a linux service as well as decoupling the maven build process
 from the RPM packaging process.
 
-`rpmbuild` is driven by the specfile. The specfile is a short script that contains package metadata including package dependencies,
+The specfile is a short script that contains package metadata including package dependencies,
 instructions to build, the files that comprise the package, and how to deploy, upgrade and remove.
 
 ###Anatomy of a linux service
@@ -42,7 +42,6 @@ I like to think about services in terms of concerns.
 ####User
 It is accepted as a good security practice that applications are not run as the root user in order to insulate the OS from
 buggy or malicious code. Typically a service user is maintained for the purpose of running the service.
-User creation is automated by RPM.
 
 ####Files
 There is a [standard that defines which files go where](http://www.tldp.org/LDP/intro-linux/html/sect_03_01.html).
@@ -53,7 +52,7 @@ In short, a service will typically have the following files:
 * `/usr/share/myservice/*`    - files (i.e. the jar/s)
 * `/var/log/myservice/*`  - logs
 
-It's important to follow this standard as these are locations a system administrator will expect. Note that there is a layer
+It's important to follow this standard as these are the locations a system administrator will expect. Note that there is a layer
 of abstraction in the RPM specfile in the form of [autoconfig style macros](https://fedoraproject.org/wiki/Packaging:RPMMacros).
 
 ####Initialisation script
@@ -68,6 +67,7 @@ The implementation follows the [Fedora wiki](https://fedoraproject.org/wiki/Pack
 A linux service will be registered with the start on boot system, such that the administrator can configure whether a service should start on
 boot on not through the OS's service management interface. i.e.
 
+    #enable start on boot
     chkconfig myservice on
 
 ###Applying RPM packaging to Java
@@ -105,26 +105,26 @@ On installation the RPM will
 
 * Deploy the files
 * Create the service user if the service user does not exist
-* Register the service with _chkconfig_
+* Register the service with `chkconfig`
 
 ####update
 
 * Updates the files
-Note that for files marked as __config(noreplace)__ there is special behavior.
+  Note that for files marked as __config(noreplace)__ there is special behavior:
   * If the config file has local edits, but the same default config is in both RPMs, the local edits are maintained
-  * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintaied and the new default config is place in .new
-  * Its up to the administrator to manually reconcile the old existing config with the new default.
+  * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintaied and the new default config is place in `.new`
+  Its up to the administrator to manually reconcile the old existing config with the new default.
   * If the config file has no local edits, and there is a new default config in the new RPM, the config is updated.
-* after the files are update, and if the service is running, the service is restarted.
+* After the files are update, and if the service is running, the service is restarted.
 
 Note that the package must be a new version otherwise RPM will refuse to update. This feature allows confident reporting of the deployed version, but
-won't work with the SNAPSHOT versioning of the maven release plugin. Adopting a continuous delivery / deployment approach where every build is versioned
+won't work with the SNAPSHOT versioning scheme of the maven release plugin. Adopting a [continuous delivery](http://www.slideshare.net/wakaleo/continuous-deliverywithmaven) / deployment approach where every build is versioned
 is more amenable to RPM updates.
 
 ####remove
 
 * stops the service
-* un-registers the service with chkconfig
+* un-registers the service with `chkconfig`
 * deletes all of the files owned by the RPM
 
 ##Issues and future improvements
