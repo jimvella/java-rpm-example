@@ -47,17 +47,7 @@ buggy or malicious code. Typically a service user is maintained for the purpose 
 There is a [standard that defines which files go where](http://www.tldp.org/LDP/intro-linux/html/sect_03_01.html).
 In short, a service will typically have the following files:
 
-```
-+-- _config.yml
-+-- _drafts
-|   +-- begin-with-the-crazy-ideas.textile
-|   +-- on-simplicity-in-technology.markdown
-+-- _includes
-|   +-- footer.html
-|   +-- header.html
-```
-
-* `/etc/rc.d/init.d/myservice` - service initialisation script
+* `/etc/rc.d/initd/myservice` - service initialisation script
 * `/etc/myservice/*`  - configuration
 * `/usr/share/myservice/*`    - files (i.e. the jar/s)
 * `/var/log/myservice/*`  - logs
@@ -81,48 +71,59 @@ boot on not through the OS's service management interface. i.e.
     chkconfig myservice on
 
 ###Applying RPM packaging to Java
-The src files for packaging:
-* `src/main/rpm-resources/**` - Files to be added to the assembly including the init script, and configuration files.
+The src files contributing to packaging:
+* `src/pom.xml` - Plugin configuration
+* `src/main/rpm-resources/config/*` - Config files to be added to the assembly
+* `src/main/rpm-resources/initd/*` - Initialisation files to be added to the assembly
 * `src/main/assembly/rpm-assembly.xml` - Assembly descriptor
 * `src/main/assembly/myservice.spec` - RPM specfile
 
 ####The Maven Assembly
-The assembly is managed with the maven plugins: maven-jar-plugin, maven-resources-plugin, maven-assembly-plugin, and comprises the following resources
+The structure of the assembly produced is
 
-* __src/main/resources/myservice.properties__
-With spring boot, its very handy to have application and logging configuration in _src/main/resources_ in order to use 'mvn spring-boot:run'.
-However by default, maven will embed any _src/main/resources_ files into the jar. Embedded properties can confuse administrators once the application
-has been deployed to production. To avoid confusion I think all configuration should be externalised to _/etc/myservice_. This is achieved by filtering
-configuration from the jar via the maven-jar-plugin, and pulling into the assembly with the maven-assembly-plugin.
-_myservice.properties_ is recycled from _src/main/resources_, whilst an independent _logback.xml_ is maintained in _src/main/rpm-resources_. It is possible
-for a single default config to work in multiple environments by not using fully qualified domain names. Short names combined with environment specific
-DNS resolver config (_/etc/resolv.conf_) should be sufficient. As for logging, separate configurations for development and a deployed services are necessary.
-Where a development logging config will be to the console and verbose, the production logging config should log to _/var/log/myservice_,
-feature a sensible rotation scheme, include a syslog appender and not be overly verbose.
+```
++-- config
++-- initd
++-- jar
+```
 
-* __src/assembly/java-rpm-example.spec__
-Whether or not to include a dependency for a specific java implementation is a bit tricky. Ideally, our app won't care what java it's run on,
+The maven-resources-plugin is used to filter / insert maven properties into the specfile, the verison being of particular importance.
+
+The maven-jar-plugin is used to exclude configuration from the jar.
+With spring boot, its very handy to have application and logging configuration in `src/main/resources` in order to use `mvn spring-boot:run`.
+However by default, maven will include any `src/main/resources` files into the jar. Hidden in the jar, this configuration
+can confuse administrators once the application has been deployed to production. To avoid confusion I think all configuration
+should be externalised to `/etc/myservice`.
+
+A package / production logging config `src/main/rpm-resources/config/logback.xml` is maintained separately from the `mvn spring-boot:run` development
+config `src/main/resources/config/logback.xml`. Where a development logging config will be to the console and verbose,
+the production logging config should log to `/var/log/myservice`, feature a sensible rotation scheme, ideally include a syslog appender and not be overly verbose.
+Whilst the same strategy can be applied to `myservice.properties`, It is possible for a single default config to work in multiple
+environments by not using fully qualified domain names. Short names combined with environment specificDNS resolver config (`/etc/resolv.conf`)
+should be sufficient. Adopting this strategy, the assembly descriptor 'cherry picks' `src/main/resources/myservice.properties` into the assembly's
+`config` in lieu of having to maintain a separate `src/main/rpm-resources/myservice.properties`.
+
+#### The specfile
+Deciding whether or not to include a package dependency for a specific java implementation is a bit tricky. Ideally, our app won't care what java it's run on,
 but without a dependency the package won't be able to check for and install if necessary a sufficient implementation for it to run.
 If a java dependency is included, the package will refuse to be installed without it, even if another java implementation is available.
 If the app is an internal app, I think its a good idea to include the dependency as it will simplify deployment.
 Otherwise the specfile follows the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript).
 
-* __src/main/rpm-resources/**__
-Includes the init script and logging configuration. Spring boot has a facility for both the properties and logback config to be passed to the executable jar
-as arguments which are leveraged in the init script. The init script otherwise follows the the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript).
-
-* __src/assembly/rpm-assembly.xml__
-Assembly descriptor to bundles the RPM resources with the spring boot executable jar for rpmbuild. Filters the specfile to insert the maven pom version.
-
 ###The RPM lifecycle
+An understanding of RPM behaviour, particularly with how configuration files are managed for updates is important to avoid deployment gotchas for java programmers.
+
 ####install
-On installation the RPM will
+
+    yum install myservice.rpm
 
 * Deploy the files
 * Create the service user if the service user does not exist
 * Register the service with `chkconfig`
 
 ####update
+
+    yum update myservice.rpm
 
 * Updates the files
   Note that for files marked as __config(noreplace)__ there is special behavior:
@@ -138,9 +139,14 @@ is more amenable to RPM updates.
 
 ####remove
 
+    yum remove myservice.rpm
+
 * stops the service
 * un-registers the service with `chkconfig`
 * deletes all of the files owned by the RPM
+
+###YUM repositories
+TODO
 
 ##Issues and future improvements
 * The example init script is sysv and should be updated to systemd
