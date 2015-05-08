@@ -19,11 +19,11 @@ on a distribution set up for rpm packaging
     yum install rpmbuild/RPMS/myservice-0.0.1-SNAPSHOT-rpm
     service myservice start
 
-http://localhost:8080
+[http://localhost:8080](http://localhost:8080)
 
 ##Packaging concepts
 ###rpmbuild
-The inputs for `rpmbuild` are a tarball of the source, and the specfile. Ideally it unpacks the source and simply runs
+`rpmbuild` is the OS tool for building RPMs. The inputs for `rpmbuild` are a tarball of the source, and the specfile. Ideally it unpacks the source and simply runs
 
     make test
     make install
@@ -33,7 +33,7 @@ whist simultaneously allowing us to add the additional files required for a linu
 from the RPM packaging process.
 
 The specfile is a short script that contains package metadata including package dependencies,
-instructions to build, the files that comprise the package, and how to deploy, upgrade and remove.
+instructions to build, the files that comprise the package, and how to deploy, update and remove.
 
 ###Anatomy of a linux service
 A linux service is an independent concept from RPM. We will need an understanding of how to structure a service before we can package it.
@@ -47,6 +47,16 @@ buggy or malicious code. Typically a service user is maintained for the purpose 
 There is a [standard that defines which files go where](http://www.tldp.org/LDP/intro-linux/html/sect_03_01.html).
 In short, a service will typically have the following files:
 
+```
++-- _config.yml
++-- _drafts
+|   +-- begin-with-the-crazy-ideas.textile
+|   +-- on-simplicity-in-technology.markdown
++-- _includes
+|   +-- footer.html
+|   +-- header.html
+```
+
 * `/etc/rc.d/init.d/myservice` - service initialisation script
 * `/etc/myservice/*`  - configuration
 * `/usr/share/myservice/*`    - files (i.e. the jar/s)
@@ -56,7 +66,7 @@ It's important to follow this standard as these are the locations a system admin
 of abstraction in the RPM specfile in the form of [autoconfig style macros](https://fedoraproject.org/wiki/Packaging:RPMMacros).
 
 ####Initialisation script
-The initialisation script runs the service as a [daemon](http://en.wikipedia.org/wiki/Daemon_%28computing%29) as the appropriate user.
+The initialisation script runs the service as a [daemon](http://en.wikipedia.org/wiki/Daemon_%28computing%29), as the appropriate user.
 It also allows the service to be managed via the OS's service management interface. i.e.
 
     service myservice start
@@ -64,13 +74,18 @@ It also allows the service to be managed via the OS's service management interfa
 The implementation follows the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript)
 
 ####Start on boot
-A linux service will be registered with the start on boot system, such that the administrator can configure whether a service should start on
+A linux service will be registered with the start on boot system `chkconfig`, such that the administrator can configure whether a service should start on
 boot on not through the OS's service management interface. i.e.
 
     #enable start on boot
     chkconfig myservice on
 
 ###Applying RPM packaging to Java
+The src files for packaging:
+* `src/main/rpm-resources/**` - Files to be added to the assembly including the init script, and configuration files.
+* `src/main/assembly/rpm-assembly.xml` - Assembly descriptor
+* `src/main/assembly/myservice.spec` - RPM specfile
+
 ####The Maven Assembly
 The assembly is managed with the maven plugins: maven-jar-plugin, maven-resources-plugin, maven-assembly-plugin, and comprises the following resources
 
@@ -112,7 +127,7 @@ On installation the RPM will
 * Updates the files
   Note that for files marked as __config(noreplace)__ there is special behavior:
   * If the config file has local edits, but the same default config is in both RPMs, the local edits are maintained
-  * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintaied and the new default config is place in `.new`
+  * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintaied and the new default config is place in `.new`.
   Its up to the administrator to manually reconcile the old existing config with the new default.
   * If the config file has no local edits, and there is a new default config in the new RPM, the config is updated.
 * After the files are update, and if the service is running, the service is restarted.
@@ -129,4 +144,4 @@ is more amenable to RPM updates.
 
 ##Issues and future improvements
 * The example init script is sysv and should be updated to systemd
-* The specfile has a section for a changelog. The current example simply leaves the section empoty. Perhaps the release notes could be pulled from Jira.
+* The specfile has a section for a changelog. The current example simply leaves the section empty. Perhaps the release notes could be pulled from Jira.
