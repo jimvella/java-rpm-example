@@ -20,6 +20,8 @@ Requires(postun): initscripts
 %description
 ${description}
 
+%define __jar_repack %{nil}
+
 %prep
 %setup -q
 
