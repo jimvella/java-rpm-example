@@ -22,7 +22,7 @@ start() {
     touch /var/run/$prog.pid
     chown $prog.$prog /var/run/$prog.pid
 
-    javacmd="/usr/bin/java -jar -Dlogback.configurationFile=/etc/$prog/logback.xml /usr/share/$prog/$prog.jar --spring.config.location=/etc/$prog/$prog.properties"
+    javacmd="/usr/bin/java -jar /usr/share/$prog/$prog.jar --spring.config.location=/etc/$prog/$prog.properties"
     cmd="$javacmd >> /var/log/$prog/$prog.log 2>&1 & echo \$! > /var/run/$prog.pid"
 
     daemon --user $prog "$cmd"
