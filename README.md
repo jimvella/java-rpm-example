@@ -123,7 +123,7 @@ An understanding of RPM behaviour, particularly with how configuration files are
 
     yum update myservice.rpm
 
-* Updates the files. Note that for files marked as __config(noreplace)__ there is special behavior:
+* Updates the files. Note that for files marked in the spec file with __config(noreplace)__ there is special behavior:
   * If the config file has local edits, but the same default config is in both RPMs, the local edits are maintained
   * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintaied and the new default config is place in `.new`.
   Its up to the administrator to manually reconcile the old existing config with the new default.
@@ -131,7 +131,7 @@ An understanding of RPM behaviour, particularly with how configuration files are
 * After the files are update, and if the service is running, the service is restarted.
 
 Note that the package must be a new version otherwise RPM will refuse to update. This feature allows confident reporting of the deployed version, but
-won't work with the SNAPSHOT versioning scheme of the maven release plugin. Adopting a [continuous delivery](http://www.slideshare.net/wakaleo/continuous-deliverywithmaven) / deployment approach where every build is versioned
+won't work with the SNAPSHOT versioning scheme of the maven release plugin. Adopting a [continuous delivery](http://www.slideshare.net/wakaleo/continuous-deliverywithmaven) approach where every build is versioned
 is more amenable to RPM updates.
 
 ####remove
