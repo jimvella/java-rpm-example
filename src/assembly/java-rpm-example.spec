@@ -41,7 +41,7 @@ cp *.jar %{buildroot}/%{_datadir}/%{name}/%{name}.jar
 rm -rf %{buildroot}
 
 %files
-%defattr(-,root,root,-)
+%defattr(-,%{name},%{name},-)
 %{_datadir}/%{name}/*
 %attr(755,root,root) %{_initddir}/*
 %{_localstatedir}/log/*
