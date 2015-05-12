@@ -17,7 +17,7 @@ lockfile=/var/lock/subsys/$prog
 start() {
     echo -n $"Starting $prog: "
 
-    #make pid file writeable - is this necessary?
+    #make pid file writeable
     rm -f /var/run/$prog.pid
     touch /var/run/$prog.pid
     chown $prog.$prog /var/run/$prog.pid
