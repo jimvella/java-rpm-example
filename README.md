@@ -10,7 +10,7 @@ or in conjunction with YUM, kickstart, puppet or chef. [PhoenixSevers](http://ma
 ##Build, package and deploy
     mvn install
 
-On a [distribution set up for rpm packaging](/blob/master/BUILD_SERVER_SETUP.md)
+On a [distribution set up for rpm packaging](BUILD_SERVER_SETUP.md)
 
     cp target/myservice-0.0.1-SNAPSHOT-rpm.tar.gz ~/rpmbuild/SOURCES
     rpmbuild -ba target/myservice.spec

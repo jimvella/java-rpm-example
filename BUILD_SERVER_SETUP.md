@@ -6,9 +6,11 @@ Create a [CentOS](https://www.centos.org/) virtual machine on [virtual box](http
 1. Insert the CentOS dvd iso into the virtual dvd drive
 1. Enable networking. After installation, by default CentOS 7 networking is disabled.
 
-    vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
-    #change ONBOOT=no to ONBOOT=yes
-    systemctl restart network
+```
+vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+#change ONBOOT=no to ONBOOT=yes
+systemctl restart network
+```
 	
 1. (optional) Add port forwarding to allow ssh connections for convenience, i.e. 2222 to 22 on the CentOS guest
 
