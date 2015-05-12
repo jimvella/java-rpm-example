@@ -13,7 +13,7 @@ or in conjunction with YUM, kickstart, puppet or chef. [PhoenixSevers](http://ma
 On a [distribution set up for rpm packaging](BUILD_SERVER_SETUP.md)
 
     cp target/myservice-0.1-rpm.tar.gz ~/rpmbuild/SOURCES
-    rpmbuild -ba target/myservice.spec
+    rpmbuild -ba target/java-rpm-example.spec
 
     #as root
     yum install rpmbuild/RPMS/noarch/myservice-0.1-1.el7.centos.noarch.rpm
