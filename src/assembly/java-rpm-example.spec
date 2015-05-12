@@ -9,7 +9,7 @@ URL:		https://github.com/Chomeh/java-rpm-example.git
 Source0:	%{name}-%{version}-rpm.tar.gz	
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:	noarch
-#Requires:	some java
+#Requires:	java-1.7.0-openjdk
 Requires(post): chkconfig
 Requires(preun): chkconfig
 # This is for /sbin/service

@@ -13,10 +13,10 @@
   </appender>
 
   <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>/var/log/myservice/myservice.log</file>
+    <file>/var/log/@project.artifactId@/@project.artifactId@.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- rollover daily -->
-      <fileNamePattern>/var/log/myservice/myservice-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <fileNamePattern>/var/log/@project.artifactId@/@project.artifactId@-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
       <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
         <!-- or whenever the file size reaches 100MB -->
         <maxFileSize>100MB</maxFileSize>
@@ -27,7 +27,7 @@
     </encoder>
   </appender>
 
-  <logger name="au.id.jamesvella.myservice" level="info"/>
+  <logger name="au.id.jamesvella" level="info"/>
 
   <root level="warn">
     <appender-ref ref="ROLLING" />

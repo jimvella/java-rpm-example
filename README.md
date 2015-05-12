@@ -64,7 +64,7 @@ It also allows the service to be managed via the OS's service management interfa
 The implementation follows the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript)
 
 ####Start on boot
-A linux service will be registered with the start on boot system `chkconfig`, such that the administrator can configure whether a service should start on
+A linux service will be registered with the 'start on boot' system `chkconfig`, such that the administrator can configure whether a service should start on
 boot on not through the OS's service management interface. i.e.
 
     #enable start on boot
@@ -114,7 +114,7 @@ An understanding of RPM behaviour, particularly with how configuration files are
 
 ####install
 
-    yum install myservice.rpm
+    yum install myservice
 
 * Deploy the files.
 * Create the service user if the service user does not exist.
@@ -122,7 +122,7 @@ An understanding of RPM behaviour, particularly with how configuration files are
 
 ####update
 
-    yum update myservice.rpm
+    yum update myservice
 
 * Updates the files. Note that for files marked in the spec file with __config(noreplace)__ there is special behavior:
   * If the config file has local edits, but the same default config is in both RPMs, the local edits are maintained
@@ -137,7 +137,7 @@ is more amenable to RPM updates.
 
 ####remove
 
-    yum remove myservice.rpm
+    yum remove myservice
 
 * Stops the service.
 * Un-registers the service with `chkconfig`.
