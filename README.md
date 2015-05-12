@@ -47,10 +47,10 @@ buggy or malicious code. Typically a service user is maintained for the purpose 
 There is a [standard that defines which files go where](http://www.tldp.org/LDP/intro-linux/html/sect_03_01.html).
 In short, a service will typically have the following files:
 
-* `/etc/rc.d/initd/myservice` - service initialisation script
-* `/etc/myservice/*`  - configuration
-* `/usr/share/myservice/*`    - files (i.e. the jar/s)
-* `/var/log/myservice/*`  - logs
+    /etc/rc.d/initd/myservice	#service initialisation script
+    /etc/myservice/*			#configuration
+    /usr/share/myservice/*		#files (i.e. the jar/s)
+    /var/log/myservice/*		#logs
 
 It's important to follow this standard as these are the locations a system administrator will expect. Note that there is a layer
 of abstraction in the RPM spec file in the form of [autoconfig style macros](https://fedoraproject.org/wiki/Packaging:RPMMacros).
@@ -72,18 +72,19 @@ boot on not through the OS's service management interface. i.e.
 
 ###Applying RPM packaging to Java
 The src files contributing to packaging:
-* `src/pom.xml` - Plugin configuration
-* `src/main/rpm-resources/config/*` - Config files to be added to the assembly
-* `src/main/rpm-resources/initd/*` - Initialisation files to be added to the assembly
-* `src/main/assembly/rpm-assembly.xml` - Assembly descriptor
-* `src/main/assembly/myservice.spec` - RPM spec file
+
+    src/pom.xml							#Plugin configuration
+    src/main/rpm-resources/config/*		#Config files to be added to the assembly
+    src/main/rpm-resources/initd/*		#Initialisation files to be added to the assembly
+    src/main/assembly/rpm-assembly.xml	#Assembly descriptor
+    src/main/assembly/myservice.spec	#RPM spec file
 
 ####The Maven Assembly
 The structure of files in the assembly are arbitrary in that they ultimately mapped by the spec file to OS locations. The chosen structure of the assembly is
 
-* `config`
-* `initd`
-* `jar`
+    config
+    initd
+    jar
 
 The maven-resources-plugin is used to insert maven properties into the spec file, the version being of particular importance.
 
