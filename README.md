@@ -10,7 +10,7 @@ or in conjunction with YUM, kickstart, puppet or chef. [PhoenixSevers](http://ma
 ##Build, package and deploy
     mvn install
 
-On a distribution set up for rpm packaging
+On a [distribution set up for rpm packaging](/blob/master/BUILD_SERVER_SETUP.md)
 
     cp target/myservice-0.0.1-SNAPSHOT-rpm.tar.gz ~/rpmbuild/SOURCES
     rpmbuild -ba target/myservice.spec
@@ -85,7 +85,7 @@ The structure of files in the assembly are arbitrary in that they ultimately map
 * `initd`
 * `jar`
 
-The maven-resources-plugin is used to insert maven properties into the spec file, the verison being of particular importance.
+The maven-resources-plugin is used to insert maven properties into the spec file, the version being of particular importance.
 
 The maven-jar-plugin is used to exclude configuration from the jar.
 With spring boot, its very handy to have application and logging configuration in `src/main/resources` in order to use `mvn spring-boot:run`.
@@ -115,8 +115,8 @@ An understanding of RPM behaviour, particularly with how configuration files are
 
     yum install myservice.rpm
 
-* Deploy the files
-* Create the service user if the service user does not exist
+* Deploy the files.
+* Create the service user if the service user does not exist.
 * Register the service with `chkconfig`
 
 ####update
@@ -125,7 +125,7 @@ An understanding of RPM behaviour, particularly with how configuration files are
 
 * Updates the files. Note that for files marked in the spec file with __config(noreplace)__ there is special behavior:
   * If the config file has local edits, but the same default config is in both RPMs, the local edits are maintained
-  * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintaied and the new default config is place in `.new`.
+  * If the config file has local edits, and there is a new default config in the new RPM, the local edits are maintained and the new default config is place in `.new`.
   Its up to the administrator to manually reconcile the old existing config with the new default.
   * If the config file has no local edits, and there is a new default config in the new RPM, the config is updated.
 * After the files are update, and if the service is running, the service is restarted.
@@ -138,13 +138,13 @@ is more amenable to RPM updates.
 
     yum remove myservice.rpm
 
-* Stops the service
-* Un-registers the service with `chkconfig`
-* Deletes all of the files owned by the RPM
-
-###YUM repositories
-TODO
+* Stops the service.
+* Un-registers the service with `chkconfig`.
+* Deletes all of the files owned by the RPM.
 
 ##Issues and future improvements
-* The example init script is sysv and should be updated to systemd
+* The [fedora java packaging HOWTO](https://fedorahosted.org/released/javapackages/doc/) prefers individual dependencies are packaged rather than the spring boot uber jar approach. The fedora way may be the future, but until packages are readily available I think packaging the spring boot uber jar as a linux service is the most pragmatic approach.
+* The example init script is sysv and should be updated to systemd.  
+* Could register a shutdown hook for graceful shutdown.
+* Could include monitoring, i.e. spring-boot-actuator or Dropwizard metrics
 * The spec file has a section for a changelog. The current example simply leaves the section empty. Perhaps the release notes could be pulled from Jira.
