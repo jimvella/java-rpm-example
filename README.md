@@ -1,4 +1,4 @@
-#Java linux service RPM packaging example featuring spring boot
+# Java linux service RPM packaging example featuring spring boot
 
 I would like to demystify how to package java services for Fedora, Red Hat and CentOS.
 There are a few build system plugins that I think end up obfuscating what is a fairly straight forward
@@ -7,7 +7,7 @@ process with the OS's native packaging tool `rpmbuild`.
 RPM is a great way to streamline deployments and upgrades. It enables better configuration management either on its own
 or in conjunction with YUM, kickstart, puppet or chef. [PhoenixSevers](http://martinfowler.com/bliki/PhoenixServer.html) become straight forward.
 
-##Build, package and deploy
+## Build, package and deploy
     mvn install
 
 On a [distribution set up for rpm packaging](BUILD_SERVER_SETUP.md)
@@ -21,8 +21,8 @@ On a [distribution set up for rpm packaging](BUILD_SERVER_SETUP.md)
 
 [http://localhost:8080](http://localhost:8080)
 
-##Packaging concepts
-###rpmbuild
+## Packaging concepts
+### rpmbuild
 `rpmbuild` is the OS tool for building RPMs. The inputs for `rpmbuild` are a tarball of the source, and the spec file. Ideally it unpacks the source and simply runs
 
     make test
@@ -35,27 +35,28 @@ from the RPM packaging process.
 The spec file is a short script that contains package metadata including package dependencies,
 instructions to build, the files that comprise the package, and how to deploy, update and remove.
 
-###Anatomy of a linux service
+### Anatomy of a linux service
 A linux service is an independent concept from RPM. We will need an understanding of how to structure a service before we can package it.
 I like to think about services in terms of concerns.
 
-####User
+#### User
 It is accepted as a good security practice that applications are not run as the root user in order to insulate the OS from
 buggy or malicious code. Typically a service user is maintained for the purpose of running the service.
 
-####Files
+#### Files
 There is a [standard that defines which files go where](http://www.tldp.org/LDP/intro-linux/html/sect_03_01.html).
 In short, a service will typically have the following files:
 
-    /etc/rc.d/initd/myservice	#service initialisation script
-    /etc/myservice/*			#configuration
-    /usr/share/myservice/*		#files (i.e. the jar/s)
-    /var/log/myservice/*		#logs
+    /etc/rc.d/initd/myservice	                #service initialisation script if using SysV
+    /usr/lib/systemd/system/myservice.service   #systemd service file if using systemd
+    /etc/myservice/*                			#configuration
+    /usr/share/myservice/*		                #files (i.e. the jar/s)
+    /var/log/myservice/*	                	#logs
 
 It's important to follow this standard as these are the locations a system administrator will expect. Note that there is a layer
 of abstraction in the RPM spec file in the form of [autoconfig style macros](https://fedoraproject.org/wiki/Packaging:RPMMacros).
 
-####Initialisation script
+#### Initialisation script
 The initialisation script runs the service as a [daemon](http://en.wikipedia.org/wiki/Daemon_%28computing%29), as the appropriate user.
 It also allows the service to be managed via the OS's service management interface. i.e.
 
@@ -63,30 +64,39 @@ It also allows the service to be managed via the OS's service management interfa
 
 The implementation follows the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript)
 
-####Start on boot
+#### Start on boot
 A linux service will be registered with the 'start on boot' system `chkconfig`, such that the administrator can configure whether a service should start on
 boot on not through the OS's service management interface. i.e.
 
     #enable start on boot
-    chkconfig myservice on
+    chkconfig myservice on 
 
-###Applying RPM packaging to Java
+On systems using systemd, use `systemctl enable myservice` instead.
+
+### Applying RPM packaging to Java
 The src files contributing to packaging:
 
     src/pom.xml							#Plugin configuration
     src/main/rpm-resources/config/*		#Config files to be added to the assembly
-    src/main/rpm-resources/initd/*		#Initialisation files to be added to the assembly
+    src/main/rpm-resources/initd/*		#Initialisation files to be added to the assembly if using SysV
+    src/main/rpm-resources/systemd/*	#Initialisation files to be added to the assembly if using systemd
     src/main/assembly/rpm-assembly.xml	#Assembly descriptor
     src/main/assembly/myservice.spec	#RPM spec file
 
-####The Maven Assembly
+
+#### The Maven Assembly
 The structure of files in the assembly are arbitrary in that they ultimately mapped by the spec file to OS locations. The chosen structure of the assembly is
 
     config
-    initd
+    initd or systemd
     jar
 
+Use initd or systemd depending on whether your system uses SysV style init scripts or systemd services.
+
 The maven-resources-plugin is used to insert maven properties into the spec file, the version being of particular importance.
+
+##### Spring Boot
+If your application uses Spring Boot, replace the variable placeholders like ${project.artifactId} to look like @project.artifactId@ or variable replacement won't work!
 
 The maven-jar-plugin is used to exclude configuration from the jar.
 With spring boot, its very handy to have application and logging configuration in `src/main/resources` in order to use `mvn spring-boot:run`.
@@ -108,11 +118,12 @@ but without a dependency the package won't be able to check for and install if n
 If a java dependency is included, the package will refuse to be installed without it, even if another java implementation is available.
 If the app is an internal app, I think its a good idea to include the dependency as it will simplify deployment.
 Otherwise the spec file follows the [Fedora wiki](https://fedoraproject.org/wiki/Packaging:SysVInitScript).
+Make sure to customise the spec file to use SysV or systemd (see the comments inside of it).
 
-###The RPM lifecycle
+### The RPM lifecycle
 An understanding of RPM behaviour, particularly with how configuration files are managed for updates is important to avoid deployment gotchas for java programmers.
 
-####install
+#### install
 
     yum install myservice
 
@@ -120,7 +131,7 @@ An understanding of RPM behaviour, particularly with how configuration files are
 * Create the service user if the service user does not exist.
 * Register the service with `chkconfig`
 
-####update
+#### update
 
     yum update myservice
 
@@ -135,7 +146,7 @@ Note that the package must be a new version otherwise RPM will refuse to update.
 won't work with the SNAPSHOT versioning scheme of the maven release plugin. Adopting a [continuous delivery](http://www.slideshare.net/wakaleo/continuous-deliverywithmaven) approach where every build is versioned
 is more amenable to RPM updates.
 
-####remove
+#### remove
 
     yum remove myservice
 
@@ -143,9 +154,8 @@ is more amenable to RPM updates.
 * Un-registers the service with `chkconfig`.
 * Deletes all of the files owned by the RPM.
 
-##Issues and future improvements
+## Issues and future improvements
 * The [fedora java packaging HOWTO](https://fedorahosted.org/released/javapackages/doc/) prefers individual dependencies are packaged rather than the spring boot uber jar approach. The fedora way may be the future, but until packages are readily available I think packaging the spring boot uber jar as a linux service is the most pragmatic approach.
-* The example init script is sysv and should be updated to systemd.  
 * Could register a shutdown hook for graceful shutdown.
 * Could include monitoring, i.e. spring-boot-actuator or Dropwizard metrics
 * The spec file has a section for a changelog. The current example simply leaves the section empty. Perhaps the release notes could be pulled from Jira.

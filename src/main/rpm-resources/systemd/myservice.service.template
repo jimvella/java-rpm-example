@@ -1,0 +1,12 @@
+[Unit]
+Description=__DESCRIPTION__
+After=network.target
+
+[Service]
+User=__USER__
+Type=simple
+ExecStart=/bin/java -jar __JAR__ --spring.config.location=__CONFIGFILE__
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
